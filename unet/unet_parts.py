@@ -57,6 +57,7 @@ class ResBlock(nn.Module):
         
         self.conv1 = nn.Conv2d(in_size, out_size, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(out_size, out_size, kernel_size=3, padding=1)
+        self.conv1x1 = nn.Conv2d(in_size, out_size, kernel_size=1, padding=1)
 
     def batch_norm(self, x):
         if self.is_batch_norm:
@@ -65,15 +66,19 @@ class ResBlock(nn.Module):
             return x
         
     def forward(self, x):
-        x1 = x        
+        x1 = x#self.conv1x1(x) 
+        print(x1.shape)    
         x2 = self.conv1(x1)
         x2 = self.batch_norm(x2)
         x2 = nn.ReLU(inplace=True)(x2)
         x2 = self.conv2(x2)
         x2 = self.batch_norm(x2)
         x2 = nn.ReLU(inplace=True)(x2)
+        print(x2.shape)
         x2 += x1
         x = nn.ReLU(inplace=True)(x2)
+        print(x.shape)
+        print('#'*40)
         return x
         
         
@@ -102,11 +107,8 @@ class Down(nn.Module):
             self.conv = DoubleConv(in_size, out_size, batch_norm)
     
     def forward(self, x):
-        print(x.shape)
         x = nn.MaxPool2d(2)(x)
-        print(x.shape)
         x = self.conv(x)
-        print(x.shape)
         return x#self.conv(x)
         
         

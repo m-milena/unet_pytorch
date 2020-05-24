@@ -37,15 +37,10 @@ class ResUNet(nn.Module):
     
     def forward(self, x):
         # Down
-        print(x.shape)
         x1 = self.convD1(x)
-        print(x1.shape)
         x2 = self.convD2(x1)
-        print(x2.shape)
         x3 = self.convD3(x2)
-        print(x3.shape)
         x4 = self.convD4(x3)
-        print(x4.shape)
         # Middle
         x = self.convM(x4)
         # Up
