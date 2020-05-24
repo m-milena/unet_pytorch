@@ -22,7 +22,6 @@ class DoubleConv(nn.Module):
         self.conv1 = nn.Conv2d(in_size, out_size, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(out_size, out_size, kernel_size=3, padding=1)
         
-    
     def batch_norm(self, x):
         if self.is_batch_norm:
             return nn.BatchNorm2d(self.out_size)(x)
@@ -39,25 +38,76 @@ class DoubleConv(nn.Module):
         return x
         
         
+class ResBlock(nn.Module):
+    ''' Residual Block for UNet
+    
+    Arguments:
+        - in_size (int): input neurons size (output size of previous layer)
+        - out_size (int): output neurons size
+        - batch_norm (bool): option to make batch normalization (default: False)
+        
+    Example: 
+            block = ResBlock(16, 64, batch_norm=True)
+    '''
+    def __init__(self, in_size, out_size, batch_norm=False):
+        super(ResBlock, self).__init__()
+        self.in_size = in_size
+        self.out_size = out_size
+        self.is_batch_norm = batch_norm
+        
+        self.conv1 = nn.Conv2d(in_size, out_size, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(out_size, out_size, kernel_size=3, padding=1)
+
+    def batch_norm(self, x):
+        if self.is_batch_norm:
+            return nn.BatchNorm2d(self.out_size)(x)
+        else:
+            return x
+        
+    def forward(self, x):
+        x1 = x        
+        x2 = self.conv1(x1)
+        x2 = self.batch_norm(x2)
+        x2 = nn.ReLU(inplace=True)(x2)
+        x2 = self.conv2(x2)
+        x2 = self.batch_norm(x2)
+        x2 = nn.ReLU(inplace=True)(x2)
+        x2 += x1
+        x = nn.ReLU(inplace=True)(x2)
+        return x
+        
+        
 class Down(nn.Module):
     ''' UNet decoder part
     
     Arguments:
         - in_size (int): input neurons size (output size of previous layer)
         - out_size (int): output neurons size
+        - batch_norm (bool): option to make batch normalization (default: False)
+        - residual (bool): option to make residual block
         
     Example: 
             layer = Down(4, 8)
     '''
-    def __init__(self, in_size, out_size):
+    def __init__(self, in_size, out_size, batch_norm=False, residual=False):
         super(Down, self).__init__()
         self.in_size = in_size
         self.out_size = out_size
+        self.residual = residual
+        self.is_batch_norm = batch_norm
+        
+        if residual:
+            self.conv = ResBlock(in_size, out_size, batch_norm)
+        else:
+            self.conv = DoubleConv(in_size, out_size, batch_norm)
     
     def forward(self, x):
+        print(x.shape)
         x = nn.MaxPool2d(2)(x)
-        x = DoubleConv(self.in_size, self.out_size)(x)
-        return x
+        print(x.shape)
+        x = self.conv(x)
+        print(x.shape)
+        return x#self.conv(x)
         
         
 class Up(nn.Module):
@@ -66,17 +116,25 @@ class Up(nn.Module):
     Arguments:
         - in_size (int): input neurons size (output size of previous layer)
         - out_size (int): output neurons size
+        - batch_norm (bool): option to make batch normalization (default: False)
+        - residual (bool): option to make residual block
         
     Example: 
             layer = Up(4, 8)
     '''
-    def __init__(self, in_size, out_size):
+    def __init__(self, in_size, out_size, batch_norm=False, residual=False):
         super(Up, self).__init__()
         self.in_size = in_size
         self.out_size = out_size
+        self.is_batch_norm = batch_norm
+        self.residual = residual
         
         self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
-        self.conv = DoubleConv(in_size, out_size)
+        
+        if residual:
+            self.conv = ResBlock(in_size, out_size, batch_norm)
+        else:
+            self.conv = DoubleConv(in_size, out_size, batch_norm)
         
     def forward(self, x1, x2):
         x1 = self.upsample(x1)
@@ -95,7 +153,7 @@ class ConvOut(nn.Module):
             layer = ConvOut(16, 2)
     '''
     def __init__(self, in_size, out_size):
-        super(Out, self).__init__()
+        super(ConvOut, self).__init__()
         self.conv = nn.Conv2d(in_size, out_size, kernel_size=1)
     
     def forward(self, x):
