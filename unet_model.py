@@ -1,65 +1,47 @@
 import torch
 import torch.nn as nn
+import unet_parts as net
+from torchsummary import summary
 
+class UNet(nn.Module):
+    def __init__(self, in_size, out_size, n_size=16):
+        super(UNet, self).__init__()
+        self.in_size = in_size
+        self.out_size = out_size
+        self.n_size = n_size
+        
+        
+        self.convD1 = net.DoubleConv(in_size, n_size)
+        self.convD2 = net.Down(n_size, n_size*2)
+        self.convD3 = net.Down(n_size*2, n_size*4)
+        self.convD4 = net.Down(n_size*4, n_size*8)
+        
+        self.convM = net.Down(n_size*8, n_size*16)
+        
+        self.convU4 = net.Up(n_size*16 + n_size*8, n_size*8)
+        self.convU3 = net.Up(n_size*8 + n_size*4, n_size*4)
+        self.convU2 = net.Up(n_size*4 + n_size*2, n_size*2)
+        self.convU1 = net.Up(n_size*2 + n_size, n_size)
+        
+        self.output = net.Out(n_size, out_size)
+        
+    def forward(self, x):
+        # Down
+        x1 = self.convD1(x)
+        x2 = self.convD2(x1)
+        x3 = self.convD3(x2)
+        x4 = self.convD4(x3)
+        # Middle
+        x = self.convM(x4)
+        # Up
+        x = self.convU4(x, x4)
+        x = self.convU3(x, x3)
+        x = self.convU2(x, x2)
+        x = self.convU1(x, x1)
 
-class DoubleConv(nn.Module):
-    def __init__(self, in_size, out_size, batch_norm=False):
-        super(DoubleConv, self).__init__()
-        self.in_size = in_size
-        self.out_size = out_size
-        self.batch_norm = batch_norm
-        
-        self.conv1 = nn.Conv2d(in_size, out_size, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(out_size, out_size, kernel_size=3, padding=1)
-        
-    def batch_norm(self, x):
-        if self.batch_norm:
-            return nn.BatchNorm2d(self.out_size)(x)
-        else:
-            return x
-            
-    def forward(self, x):
-        x = self.conv1(x)
-        x = batch_norm(x)
-        x = nn.ReLU()(x)
-        x = self.conv2(x)
-        x = batch_norm(x)
-        x = nn.ReLU()(x)
-        return x
+        return self.output(x)
         
         
-class Down(nn.Module):
-    def __init__(self, in_size, out_size):
-        super(Down, self).__init__()
-        self.in_size = in_size
-        self.out_size = out_size
-    
-    def forward(self, x):
-        x = DoubleConv(self.in_size, self.out_size)(x)
-        x = nn.MaxPool2d(2)(x)
-        return x
-        
-class Up(nn.Module):
-    def __init__(self, in_size, out_size):
-        super(Up, self).__init__()
-        self.in_size = in_size
-        self.out_size = out_size
-        
-        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
-        self.conv = DoubleConv(self.in_size, out_size)
-        
-    def forward(self, x1, x2):
-        x = self.conv(x1)
-        x = self.upsample(x)
-        x = torch.cat([x, x2], dim=1)
-        return x
-        
-class Out(nn.Module):
-    def __init__(self, in_size, out_size):
-        super(Out, self).__init__()
-        self.conv = nn.Conv2d(in_size, out_size, kernel_size=1)
-    
-    def forward(self, x):
-        return self.conv(x)
-        
-        
+if __name__ == '__main__':
+    net = UNet(1, 1, n_size=64)
+    summary(net, (1, 256, 256))
