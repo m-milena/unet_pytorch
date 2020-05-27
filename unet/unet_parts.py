@@ -20,20 +20,21 @@ class DoubleConv(nn.Module):
         self.is_batch_norm = batch_norm
         
         self.conv1 = nn.Conv2d(in_size, out_size, kernel_size=3, padding=1)
+        self.batch_norm_1 = nn.BatchNorm2d(out_size)
+
         self.conv2 = nn.Conv2d(out_size, out_size, kernel_size=3, padding=1)
-        
-    def batch_norm(self, x):
-        if self.is_batch_norm:
-            return nn.BatchNorm2d(self.out_size)(x)
-        else:
-            return x
+        self.batch_norm_2 = nn.BatchNorm2d(out_size)
+
             
     def forward(self, x):
         x = self.conv1(x)
-        x = self.batch_norm(x)
+        if self.is_batch_norm:
+            x = self.batch_norm_1(x)
         x = nn.ReLU(inplace=True)(x)
+
         x = self.conv2(x)
-        x = self.batch_norm(x)
+        if self.is_batch_norm:
+            x = self.batch_norm_2(x)
         x = nn.ReLU(inplace=True)(x)
         return x
         
@@ -54,31 +55,37 @@ class ResBlock(nn.Module):
         self.in_size = in_size
         self.out_size = out_size
         self.is_batch_norm = batch_norm
-        
-        self.conv1 = nn.Conv2d(in_size, out_size, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(out_size, out_size, kernel_size=3, padding=1)
-        self.conv1x1 = nn.Conv2d(in_size, out_size, kernel_size=1, padding=1)
 
-    def batch_norm(self, x):
-        if self.is_batch_norm:
-            return nn.BatchNorm2d(self.out_size)(x)
-        else:
-            return x
+        self.conv1 = nn.Conv2d(in_size, out_size, kernel_size=3, padding=1)
+        self.batch_norm_1 = nn.BatchNorm2d(out_size)
+
+        self.conv2 = nn.Conv2d(out_size, out_size, kernel_size=3, padding=1)
+        self.batch_norm_2 = nn.BatchNorm2d(out_size)
+
+        self.conv1x1 = nn.Conv2d(in_size, out_size, kernel_size=1, padding=0)
+        self.batch_norm_1x1 = nn.BatchNorm2d(out_size)
+
         
     def forward(self, x):
-        x1 = x#self.conv1x1(x) 
-        print(x1.shape)    
-        x2 = self.conv1(x1)
-        x2 = self.batch_norm(x2)
+        x1 = x
+
+        x2 = self.conv1(x)
+        if self.is_batch_norm:
+            x2 = self.batch_norm_1(x2)
         x2 = nn.ReLU(inplace=True)(x2)
+
         x2 = self.conv2(x2)
-        x2 = self.batch_norm(x2)
+        if self.is_batch_norm:
+            x2 = self.batch_norm_2(x2)
         x2 = nn.ReLU(inplace=True)(x2)
-        print(x2.shape)
+
+        if self.in_size != self.out_size:
+            x1 = self.conv1x1(x1)
+            if self.is_batch_norm: x1 = self.batch_norm_1x1(x1)
+            x1 = nn.ReLU(inplace=True)(x1)
+
         x2 += x1
         x = nn.ReLU(inplace=True)(x2)
-        print(x.shape)
-        print('#'*40)
         return x
         
         
@@ -109,7 +116,7 @@ class Down(nn.Module):
     def forward(self, x):
         x = nn.MaxPool2d(2)(x)
         x = self.conv(x)
-        return x#self.conv(x)
+        return x
         
         
 class Up(nn.Module):
