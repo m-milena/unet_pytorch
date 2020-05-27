@@ -30,12 +30,12 @@ class DoubleConv(nn.Module):
         x = self.conv1(x)
         if self.is_batch_norm:
             x = self.batch_norm_1(x)
-        x = nn.ReLU(inplace=True)(x)
+        x = nn.ReLU()(x)
 
         x = self.conv2(x)
         if self.is_batch_norm:
             x = self.batch_norm_2(x)
-        x = nn.ReLU(inplace=True)(x)
+        x = nn.ReLU()(x)
         return x
         
         
@@ -72,20 +72,20 @@ class ResBlock(nn.Module):
         x2 = self.conv1(x)
         if self.is_batch_norm:
             x2 = self.batch_norm_1(x2)
-        x2 = nn.ReLU(inplace=True)(x2)
+        x2 = nn.ReLU()(x2)
 
         x2 = self.conv2(x2)
         if self.is_batch_norm:
             x2 = self.batch_norm_2(x2)
-        x2 = nn.ReLU(inplace=True)(x2)
+        x2 = nn.ReLU()(x2)
 
         if self.in_size != self.out_size:
             x1 = self.conv1x1(x1)
             if self.is_batch_norm: x1 = self.batch_norm_1x1(x1)
-            x1 = nn.ReLU(inplace=True)(x1)
+            x1 = nn.ReLU()(x1)
 
         x2 += x1
-        x = nn.ReLU(inplace=True)(x2)
+        x = nn.ReLU()(x2)
         return x
         
         

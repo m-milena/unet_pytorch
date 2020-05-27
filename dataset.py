@@ -51,6 +51,6 @@ class Preprocessing(object):
                 sample[f][key] = cv2.resize(sample[f][key], self.size)
             sample[f] = np.array([sample[f][key] for key in sample[f]])
             if self.toTensor:
-                sample[f] = torch.from_numpy(sample[f])    
+                sample[f] = torch.from_numpy(sample[f]).float()
         return sample
 

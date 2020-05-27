@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import unet_parts as net
+import unet.unet_parts as net
 from torchsummary import summary
 
 class ResUNet(nn.Module):
@@ -20,17 +20,17 @@ class ResUNet(nn.Module):
         self.out_size = out_size
         self.n_size = n_size
         
-        self.convD1 = net.ResBlock(in_size, n_size)
-        self.convD2 = net.Down(n_size, n_size*2, residual=True)
-        self.convD3 = net.Down(n_size*2, n_size*4, residual=True)
-        self.convD4 = net.Down(n_size*4, n_size*8, residual=True)
+        self.convD1 = net.ResBlock(in_size, n_size, batch_norm=True)
+        self.convD2 = net.Down(n_size, n_size*2, residual=True, batch_norm=True)
+        self.convD3 = net.Down(n_size*2, n_size*4, residual=True, batch_norm=True)
+        self.convD4 = net.Down(n_size*4, n_size*8, residual=True, batch_norm=True)
         
-        self.convM = net.Down(n_size*8, n_size*16, residual=True)
+        self.convM = net.Down(n_size*8, n_size*16, residual=True, batch_norm=True)
         
-        self.convU4 = net.Up(n_size*16 + n_size*8, n_size*8, residual=True)
-        self.convU3 = net.Up(n_size*8 + n_size*4, n_size*4, residual=True)
-        self.convU2 = net.Up(n_size*4 + n_size*2, n_size*2, residual=True)
-        self.convU1 = net.Up(n_size*2 + n_size, n_size, residual=True)
+        self.convU4 = net.Up(n_size*16 + n_size*8, n_size*8, residual=True, batch_norm=True)
+        self.convU3 = net.Up(n_size*8 + n_size*4, n_size*4, residual=True, batch_norm=True)
+        self.convU2 = net.Up(n_size*4 + n_size*2, n_size*2, residual=True, batch_norm=True)
+        self.convU1 = net.Up(n_size*2 + n_size, n_size, residual=True, batch_norm=True)
         
         self.output = net.ConvOut(n_size, out_size)
     
