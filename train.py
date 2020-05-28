@@ -45,6 +45,7 @@ def main():
 
     # Model
     model = unet.ResUNet(2, 1, n_size=16)
+    model.cuda()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     train_loss = AverageMeter('Training loss', ':.6f')
