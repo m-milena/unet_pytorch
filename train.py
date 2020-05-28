@@ -1,41 +1,17 @@
 import cv2
 import torch
-from torch.utils.data.dataset import random_split
 from torchvision import transforms, utils
+from torch.utils.data.dataset import random_split
 
-from dataset import Dataset, Preprocessing
-import unet.resunet_model as unet
 import loggs
-
+import unet.resunet_model as unet
+from average_meter import AverageMeter
+from dataset import Dataset, Preprocessing
 
 def dice_loss(pred,target):
     numerator = 2 * torch.sum(pred * target)
     denominator = torch.sum(pred + target)
     return 1 - (numerator + 1) / (denominator + 1)
-
-
-class AverageMeter(object):
-    """Computes and stores the average and current value"""
-    def __init__(self, name, fmt=':f'):
-        self.name = name
-        self.fmt = fmt
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
-
-    def __str__(self):
-        fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
-        return fmtstr.format(**self.__dict__)
 
 
 def main():
@@ -109,9 +85,6 @@ def main():
                 best_loss = val_loss.avg
                 torch.save(model, 'best_model.pt')
                 
-            
-
-        
 
 if __name__ == '__main__':
     main()
