@@ -166,6 +166,6 @@ class ConvOut(nn.Module):
         self.conv = nn.Conv2d(in_size, out_size, kernel_size=1)
     
     def forward(self, x):
-        return self.conv(x)
-        
+        self.conv(x)
+        return nn.Sigmoid()(x)
         
