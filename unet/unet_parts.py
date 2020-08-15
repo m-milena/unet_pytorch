@@ -78,7 +78,7 @@ class ResBlock(nn.Module):
         if self.is_batch_norm:
             x2 = self.batch_norm_2(x2)
         x2 = nn.ReLU()(x2)
-
+        
         if self.in_size != self.out_size:
             x1 = self.conv1x1(x1)
             if self.is_batch_norm: x1 = self.batch_norm_1x1(x1)
@@ -137,7 +137,6 @@ class Up(nn.Module):
         self.out_size = out_size
         self.is_batch_norm = batch_norm
         self.residual = residual
-        
         self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
         
         if residual:
